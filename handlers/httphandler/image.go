@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/geekakili/portside/driver"
+	"github.com/geekakili/portside/models"
 	repository "github.com/geekakili/portside/repository/image"
 	"github.com/go-chi/chi"
 )
@@ -31,15 +32,6 @@ type imageHandler struct {
 	dockerClient *client.Client
 }
 
-// Image holds basic information about the docker image
-type Image struct {
-	ID         string   //ID of the docker image
-	Size       int64    // Size of the docker image
-	Repository string   // Repository of the docker image
-	Tag        string   //Tag of the docker image
-	Digests    []string // List of sha256 digests
-}
-
 // list returns a list of all docker images on the host machine
 func (image *imageHandler) list(w http.ResponseWriter, r *http.Request) {
 	dockerImages, err := image.dockerClient.ImageList(r.Context(), types.ImageListOptions{})
@@ -48,13 +40,13 @@ func (image *imageHandler) list(w http.ResponseWriter, r *http.Request) {
 		respondWithJSON(w, http.StatusInternalServerError, "Opps, Something went wrong")
 	}
 
-	var images []Image
+	var images []models.Image
 	if len(dockerImages) > 0 {
 		for _, imageData := range dockerImages {
 			repoData := strings.Split(imageData.RepoTags[0], ":")
 			repo := repoData[0]
 			tag := repoData[1]
-			dockerImage := Image{
+			dockerImage := models.Image{
 				ID:         imageData.ID,
 				Size:       imageData.Size,
 				Repository: repo,
