@@ -102,12 +102,15 @@ func (image *imageHandler) pullImage(w http.ResponseWriter, r *http.Request) {
 	var remoteImage string
 	if len(imageData.Repository) == 0 {
 		remoteImage = fmt.Sprintf("%s/%s", Dockerhub, imageData.Name)
+	} else {
+		remoteImage = fmt.Sprintf("%s/%s", imageData.Repository, imageData.Name)
 	}
 
 	if len(imageData.Tag) > 0 {
 		remoteImage = fmt.Sprintf("%s:%s", remoteImage, imageData.Tag)
 	}
 
+	fmt.Println(remoteImage)
 	reader, err := image.dockerClient.ImagePull(r.Context(), remoteImage, types.ImagePullOptions{})
 	if err != nil {
 		errString := err.Error()
