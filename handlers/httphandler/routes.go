@@ -16,11 +16,12 @@ func SetupRoutes(db *driver.DB) (*chi.Mux, error) {
 	router.Use(middleware.Logger)
 
 	client, err := client.NewEnvClient()
-
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
 	}
+
 	setupImageHandler(db, client, router)
+
 	return router, nil
 }
