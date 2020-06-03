@@ -23,5 +23,9 @@ func main() {
 	}
 
 	fmt.Println("Portside server listening on port 8005")
-	http.ListenAndServe(":8005", router)
+	err = http.ListenAndServe(":8005", router)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
