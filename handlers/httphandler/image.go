@@ -44,7 +44,7 @@ func setupImageHandler(db *driver.DB, client *client.Client, httpRouter *chi.Mux
 	router := chi.NewRouter()
 	router.Get("/list", handler.list)
 	router.Post("/pull", handler.pullImage)
-	setupRoute(httpRouter, router, "/image")
+	setupRoute(httpRouter, router, "/images")
 }
 
 // imageHandler ...
