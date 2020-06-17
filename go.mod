@@ -11,4 +11,5 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/go-chi/chi v4.1.1+incompatible
 	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/zippoxer/bow v0.0.0-20200229231453-bf1012ae7ab9
 )

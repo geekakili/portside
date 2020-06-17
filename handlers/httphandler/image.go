@@ -34,6 +34,11 @@ type progress struct {
 	ID       string
 }
 
+type imageLabel struct {
+	Image  string
+	Labels []string
+}
+
 // SetupImageHandler setups routes to handle image requests
 func setupImageHandler(db *driver.DB, client *client.Client, httpRouter *chi.Mux) {
 	handler := &imageHandler{
@@ -44,6 +49,7 @@ func setupImageHandler(db *driver.DB, client *client.Client, httpRouter *chi.Mux
 	router := chi.NewRouter()
 	router.Get("/list", handler.list)
 	router.Post("/pull", handler.pullImage)
+	router.Post("/label", handler.labelImage)
 	setupRoute(httpRouter, router, "/images")
 }
 
@@ -136,4 +142,18 @@ func (image *imageHandler) pullImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJSON(w, http.StatusOK, inspectedImage)
+}
+
+// labelImage ...
+func (image *imageHandler) labelImage(w http.ResponseWriter, r *http.Request) {
+	labelInfo := new(imageLabel)
+	err := json.NewDecoder(r.Body).Decode(labelInfo)
+	if err != nil {
+		respondWithJSON(w, http.StatusInternalServerError, "Oops, something went wrong")
+	}
+	err = image.repo.AddLabel(r.Context(), labelInfo.Image, labelInfo.Labels...)
+	if err != nil {
+		respondWithJSON(w, http.StatusInternalServerError, err)
+	}
+	respondWithJSON(w, http.StatusOK, labelInfo)
 }
