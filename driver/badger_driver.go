@@ -1,12 +1,12 @@
 package driver
 
 import (
-	badger "github.com/dgraph-io/badger/v2"
+	"github.com/zippoxer/bow"
 )
 
 // DB ...
 type DB struct {
-	Badger *badger.DB
+	Badger *bow.DB
 }
 
 // BadgerCon
@@ -14,7 +14,7 @@ var badgerCon = &DB{}
 
 // ConnectBadger creates a badgerDB connection
 func ConnectBadger(path string) (*DB, error) {
-	db, err := badger.Open(badger.DefaultOptions(path))
+	db, err := bow.Open(path)
 	badgerCon.Badger = db
 
 	return badgerCon, err
