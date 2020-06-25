@@ -104,6 +104,13 @@ func (image *imageHandler) pullImage(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(imageData)
 	if err != nil {
 		respondWithJSON(w, http.StatusInternalServerError, "Couldn't parse image name")
+		return
+	}
+
+	err = validate.Validate(imageData)
+	if err != nil {
+		respondWithJSON(w, http.StatusBadRequest, "Image name is missing, check your request and try again")
+		return
 	}
 
 	var remoteImage string
@@ -117,7 +124,6 @@ func (image *imageHandler) pullImage(w http.ResponseWriter, r *http.Request) {
 		remoteImage = fmt.Sprintf("%s:%s", remoteImage, imageData.Tag)
 	}
 
-	fmt.Println(remoteImage)
 	reader, err := image.dockerClient.ImagePull(r.Context(), remoteImage, types.ImagePullOptions{})
 	if err != nil {
 		errString := err.Error()
