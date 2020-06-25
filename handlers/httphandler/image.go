@@ -13,6 +13,7 @@ import (
 	"github.com/geekakili/portside/models"
 	repository "github.com/geekakili/portside/repository/image"
 	"github.com/go-chi/chi"
+	validate "gopkg.in/dealancer/validate.v2"
 )
 
 // ImageRepository ..
@@ -35,8 +36,8 @@ type progress struct {
 }
 
 type imageLabel struct {
-	Image  string
-	Labels []string
+	Image  string   `validate:"empty=false"`
+	Labels []string `validate:"empty=false"`
 }
 
 // SetupImageHandler setups routes to handle image requests
@@ -150,10 +151,18 @@ func (image *imageHandler) labelImage(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(labelInfo)
 	if err != nil {
 		respondWithJSON(w, http.StatusInternalServerError, "Oops, something went wrong")
+		return
+	}
+
+	err = validate.Validate(labelInfo)
+	if err != nil {
+		respondWithJSON(w, http.StatusBadRequest, "Some data is missing, check your request and try again")
+		return
 	}
 	err = image.repo.AddLabel(r.Context(), labelInfo.Image, labelInfo.Labels...)
 	if err != nil {
 		respondWithJSON(w, http.StatusInternalServerError, err)
+		return
 	}
 	respondWithJSON(w, http.StatusOK, labelInfo)
 }
