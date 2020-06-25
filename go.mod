@@ -12,4 +12,6 @@ require (
 	github.com/go-chi/chi v4.1.1+incompatible
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/zippoxer/bow v0.0.0-20200229231453-bf1012ae7ab9
+	gopkg.in/dealancer/validate.v2 v2.1.0
+	gopkg.in/validator.v2 v2.0.0-20200605151824-2b28d334fa05
 )
