@@ -9,13 +9,13 @@ import (
 )
 
 type httpResponse struct {
-	Status int
-	Data   interface{}
+	Status  int
+	Message interface{}
 }
 
 // respondWithJSON returns a JSON response
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	response, err := json.Marshal(httpResponse{Status: code, Data: payload})
+	response, err := json.Marshal(httpResponse{Status: code, Message: payload})
 	if err != nil {
 		fmt.Println(err)
 	}
