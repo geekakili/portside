@@ -40,8 +40,14 @@ func (db *badgerDB) AddLabel(ctx context.Context, tag string, labels ...string) 
 	return err
 }
 
-func (db *badgerDB) GetByName(ctx context.Context, name string) (*models.Image, error) {
-	return nil, nil
+// GetImageLabels Returns a list of labels associated with the image
+func (db *badgerDB) GetImageLabels(ctx context.Context, imageName string) (labels []string, err error) {
+	var imageLabel models.ImageLabel
+	err = db.Conn.Bucket("labeledImages").Get(imageName, &imageLabel)
+	if err != nil {
+		return nil, err
+	}
+	return imageLabel.Labels, nil
 }
 
 func (db *badgerDB) GetByLabel(ctx context.Context, label string) ([]*models.Image, error) {
