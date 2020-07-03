@@ -64,24 +64,38 @@ type imageHandler struct {
 func (image *imageHandler) list(w http.ResponseWriter, r *http.Request) {
 	dockerImages, err := image.dockerClient.ImageList(r.Context(), types.ImageListOptions{})
 	if err != nil {
-		fmt.Println(err)
 		respondWithJSON(w, http.StatusInternalServerError, "Opps, Something went wrong")
 	}
 
 	var images []models.Image
 	if len(dockerImages) > 0 {
 		for _, imageData := range dockerImages {
-			repoData := strings.Split(imageData.RepoTags[0], ":")
-			repo := repoData[0]
-			tag := repoData[1]
+			var name string
+			var tag string
+			var dockerImageName string
+			if len(imageData.RepoTags) > 0 {
+				dockerImageName = imageData.RepoTags[0]
+				repoData := strings.Split(dockerImageName, ":")
+				name = repoData[0]
+				tag = repoData[1]
+			}
+
 			dockerImage := models.Image{
+				Name:       name,
 				ID:         imageData.ID,
 				Size:       imageData.Size,
-				Repository: repo,
+				Repository: "repo",
 				Tag:        tag,
 				Digests:    imageData.RepoDigests,
+				Labels:     make([]string, 0),
 			}
-			fmt.Println(imageData.ID)
+
+			if len(dockerImageName) > 0 {
+				labels, err := image.repo.GetImageLabels(r.Context(), dockerImageName)
+				if err == nil {
+					dockerImage.Labels = labels
+				}
+			}
 			images = append(images, dockerImage)
 		}
 	}

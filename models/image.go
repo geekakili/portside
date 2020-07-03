@@ -8,6 +8,7 @@ type Image struct {
 	Repository string   // Repository of the docker image
 	Tag        string   // Tag of the docker image
 	Digests    []string // List of sha256 digests
+	Labels     []string // List of image labels
 }
 
 // ImageLabel holds information needed to label an image

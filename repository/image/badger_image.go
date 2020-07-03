@@ -23,25 +23,36 @@ type labelData struct {
 func (db *badgerDB) AddLabel(ctx context.Context, tag string, labels ...string) error {
 	label := models.ImageLabel{
 		Id:     tag,
-		Labels: labels,
+		Labels: make([]string, 0),
 	}
 
+	imageLabels, err := db.GetImageLabels(ctx, tag)
 	for _, labelName := range labels {
-		label := labelData{
+		newLabel := labelData{
 			Id: labelName,
 		}
-		err := db.Conn.Bucket("labels").Put(label)
+		err := db.Conn.Bucket("labels").Put(newLabel)
 		if err != nil {
 			return err
 		}
+		labelFound := Contains(imageLabels, labelName)
+		if labelFound == false {
+			label.Labels = append(label.Labels, labelName)
+		}
 	}
 
-	err := db.Conn.Bucket("labeledImages").Put(label)
+	err = db.Conn.Bucket("labeledImages").Put(label)
 	return err
 }
 
-func (db *badgerDB) GetByName(ctx context.Context, name string) (*models.Image, error) {
-	return nil, nil
+// GetImageLabels Returns a list of labels associated with the image
+func (db *badgerDB) GetImageLabels(ctx context.Context, imageName string) (labels []string, err error) {
+	var imageLabel models.ImageLabel
+	err = db.Conn.Bucket("labeledImages").Get(imageName, &imageLabel)
+	if err != nil {
+		return nil, err
+	}
+	return imageLabel.Labels, nil
 }
 
 func (db *badgerDB) GetByLabel(ctx context.Context, label string) ([]*models.Image, error) {
