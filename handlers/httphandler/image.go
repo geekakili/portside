@@ -184,5 +184,11 @@ func (image *imageHandler) labelImage(w http.ResponseWriter, r *http.Request) {
 		respondWithJSON(w, http.StatusInternalServerError, err)
 		return
 	}
-	respondWithJSON(w, http.StatusOK, labelInfo)
+
+	labels, err := image.repo.GetImageLabels(r.Context(), labelInfo.Image)
+	if err != nil {
+		respondWithJSON(w, http.StatusInternalServerError, err)
+		return
+	}
+	respondWithJSON(w, http.StatusOK, labels)
 }
