@@ -38,7 +38,7 @@ func (db *badgerDB) AddLabel(ctx context.Context, tag string, labels ...string) 
 		}
 
 		imageFound := ArrayContains(newLabel.Images, tag)
-		if imageFound == false {
+		if !imageFound {
 			newLabel.Images = append(newLabel.Images, tag)
 			err := db.Conn.Bucket("labels").Put(newLabel)
 			if err != nil {
@@ -47,7 +47,7 @@ func (db *badgerDB) AddLabel(ctx context.Context, tag string, labels ...string) 
 		}
 
 		labelFound := ArrayContains(imageLabels, labelName)
-		if labelFound == false {
+		if !labelFound {
 			label.Labels = append(label.Labels, labelName)
 		}
 	}
@@ -65,6 +65,8 @@ func (db *badgerDB) GetImageLabels(ctx context.Context, imageName string) (label
 	return imageLabel.Labels, nil
 }
 
-func (db *badgerDB) GetByLabel(ctx context.Context, label string) ([]*models.Image, error) {
-	return nil, nil
+func (db *badgerDB) GetByLabel(ctx context.Context, label string) ([]string, error) {
+	var imageLabel labelData
+	err := db.Conn.Bucket("labels").Get(label, &imageLabel)
+	return imageLabel.Images, err
 }
