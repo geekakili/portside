@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -62,44 +63,38 @@ type imageHandler struct {
 
 // list returns a list of all docker images on the host machine
 func (image *imageHandler) list(w http.ResponseWriter, r *http.Request) {
-	dockerImages, err := image.dockerClient.ImageList(r.Context(), types.ImageListOptions{})
-	if err != nil {
-		respondWithJSON(w, http.StatusInternalServerError, "Opps, Something went wrong")
-	}
-
-	var images []models.Image
-	if len(dockerImages) > 0 {
-		for _, imageData := range dockerImages {
-			var name string
-			var tag string
-			var dockerImageName string
-			if len(imageData.RepoTags) > 0 {
-				dockerImageName = imageData.RepoTags[0]
-				repoData := strings.Split(dockerImageName, ":")
-				name = repoData[0]
-				tag = repoData[1]
-			}
-
-			dockerImage := models.Image{
-				Name:       name,
-				ID:         imageData.ID,
-				Size:       imageData.Size,
-				Repository: "repo",
-				Tag:        tag,
-				Digests:    imageData.RepoDigests,
-				Labels:     make([]string, 0),
-			}
-
-			if len(dockerImageName) > 0 {
-				labels, err := image.repo.GetImageLabels(r.Context(), dockerImageName)
-				if err == nil {
-					dockerImage.Labels = labels
+	labels, ok := r.URL.Query()["withLabel"]
+	if ok && len(labels) > 0 {
+		var dockerImages []types.ImageInspect
+		for _, label := range labels {
+			labeledImages, err := image.repo.GetByLabel(r.Context(), label)
+			if err == nil && len(labeledImages) > 0 {
+				for _, labeledImage := range labeledImages {
+					dockerImage, _, err := image.dockerClient.ImageInspectWithRaw(r.Context(), labeledImage)
+					if err != nil {
+						continue
+					}
+					dockerImages = append(dockerImages, dockerImage)
 				}
 			}
-			images = append(images, dockerImage)
+		}
+		if len(dockerImages) > 0 {
+			image.marshallDockerImages(r.Context(), w, dockerImages)
+		} else {
+			respondWithJSON(w, http.StatusNotFound, "No images with matching labels found on the host system")
+		}
+	} else {
+		images, err := image.dockerClient.ImageList(r.Context(), types.ImageListOptions{})
+		if err != nil {
+			respondWithJSON(w, http.StatusInternalServerError, "Opps, Something went wrong")
+		}
+		if len(images) > 0 {
+			//dockerImages = append(dockerImages, images)
+			image.marshallDockerImages(r.Context(), w, images)
+		} else {
+			respondWithJSON(w, http.StatusNotFound, "No images found on the host system")
 		}
 	}
-	respondWithJSON(w, http.StatusOK, images)
 }
 
 // GetByName ...
@@ -184,5 +179,51 @@ func (image *imageHandler) labelImage(w http.ResponseWriter, r *http.Request) {
 		respondWithJSON(w, http.StatusInternalServerError, err)
 		return
 	}
-	respondWithJSON(w, http.StatusOK, labelInfo)
+
+	labels, err := image.repo.GetImageLabels(r.Context(), labelInfo.Image)
+	if err != nil {
+		respondWithJSON(w, http.StatusInternalServerError, err)
+		return
+	}
+	respondWithJSON(w, http.StatusOK, labels)
+}
+
+func (image *imageHandler) marshallDockerImages(ctx context.Context, w http.ResponseWriter, dockerImages interface{}) {
+	var images []models.Image
+	dockerImagesVal := reflect.ValueOf(dockerImages)
+	for i := 0; i < dockerImagesVal.Len(); i++ {
+		var name string
+		var tag string
+		imageData := dockerImagesVal.Index(i)
+		var dockerImageName string
+		repoTags := imageData.FieldByName("RepoTags").Interface().([]string)
+		if len(repoTags) > 0 {
+			dockerImageName = repoTags[0]
+			repoData := strings.Split(dockerImageName, ":")
+			name = repoData[0]
+			tag = repoData[1]
+		}
+
+		imageID := imageData.FieldByName("ID").String()
+		imageSize := imageData.FieldByName("Size").Int()
+		repoDigests := imageData.FieldByName("RepoDigests").Interface().([]string)
+		dockerImage := models.Image{
+			Name:       name,
+			ID:         imageID,
+			Size:       imageSize,
+			Repository: "repo",
+			Tag:        tag,
+			Digests:    repoDigests,
+			Labels:     make([]string, 0),
+		}
+
+		if len(dockerImageName) > 0 {
+			labels, err := image.repo.GetImageLabels(ctx, dockerImageName)
+			if err == nil {
+				dockerImage.Labels = labels
+			}
+		}
+		images = append(images, dockerImage)
+	}
+	respondWithJSON(w, http.StatusOK, images)
 }
