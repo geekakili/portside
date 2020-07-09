@@ -22,6 +22,7 @@ func SetupRoutes(db *driver.DB) (*chi.Mux, error) {
 	}
 
 	setupImageHandler(db, client, router)
+	setupLabelHandler(db, client, router)
 
 	return router, nil
 }

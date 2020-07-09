@@ -25,7 +25,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func setupRoute(parent *chi.Mux, child *chi.Mux, prefix string) {
-	parent.Route("/", func(rt chi.Router) {
-		rt.Mount(prefix, child)
+	parent.Route(prefix, func(rt chi.Router) {
+		rt.Mount("/", child)
 	})
 }

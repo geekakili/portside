@@ -97,16 +97,6 @@ func (image *imageHandler) list(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetByName ...
-func (image *imageHandler) getByName(w http.ResponseWriter, r *http.Request) {
-
-}
-
-// GetByLabel ...
-func (image *imageHandler) getByLabel(ctx context.Context, label string) {
-
-}
-
 // PullImage pulls image from remote repository
 func (image *imageHandler) pullImage(w http.ResponseWriter, r *http.Request) {
 	imageData := new(models.Image)
