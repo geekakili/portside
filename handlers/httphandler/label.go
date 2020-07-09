@@ -23,7 +23,7 @@ func setupLabelHandler(db *driver.DB, client *client.Client, httpRouter *chi.Mux
 	router.Get("/list/{label}", handler.list)
 	router.Get("/list", handler.list)
 	// router.Post("/edit", handler.edit)
-	// router.Post("/delete", handler.delete)
+	router.Delete("/delete/{label}", handler.delete)
 	setupRoute(httpRouter, router, "/labels")
 }
 
@@ -72,4 +72,18 @@ func (label *labelHandler) list(w http.ResponseWriter, r *http.Request) {
 		}
 		respondWithJSON(w, http.StatusNotFound, "No labels exist on this host")
 	}
+}
+
+func (label *labelHandler) delete(w http.ResponseWriter, r *http.Request) {
+	labelName := chi.URLParam(r, "label")
+	if len(labelName) > 0 {
+		deleted, err := label.repo.Delete(r.Context(), labelName)
+		if err != nil || !deleted {
+			respondWithJSON(w, http.StatusInternalServerError, "Label failed to delete")
+			return
+		}
+		respondWithJSON(w, http.StatusOK, "Label deleted successfully")
+		return
+	}
+	respondWithJSON(w, http.StatusBadRequest, "Could not delete label, request is malformed")
 }
