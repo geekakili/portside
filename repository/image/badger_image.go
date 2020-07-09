@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/geekakili/portside/models"
+	"github.com/geekakili/portside/repository"
 	"github.com/zippoxer/bow"
 )
 
@@ -37,7 +38,7 @@ func (db *badgerDB) AddLabel(ctx context.Context, tag string, labels ...string) 
 			}
 		}
 
-		imageFound := ArrayContains(newLabel.Images, tag)
+		imageFound := repository.ArrayContains(newLabel.Images, tag)
 		if !imageFound {
 			newLabel.Images = append(newLabel.Images, tag)
 			err := db.Conn.Bucket("labels").Put(newLabel)
@@ -46,7 +47,7 @@ func (db *badgerDB) AddLabel(ctx context.Context, tag string, labels ...string) 
 			}
 		}
 
-		labelFound := ArrayContains(imageLabels, labelName)
+		labelFound := repository.ArrayContains(imageLabels, labelName)
 		if !labelFound {
 			label.Labels = append(label.Labels, labelName)
 		}
