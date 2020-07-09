@@ -13,6 +13,6 @@ type Image struct {
 
 // ImageLabel holds information needed to label an image
 type ImageLabel struct {
-	Id     string `bow:"key"`
+	Image  string `bow:"key"`
 	Labels []string
 }
