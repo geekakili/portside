@@ -31,3 +31,20 @@ func (db *badgerDB) AddLabel(ctx context.Context, label string, description stri
 
 	return labelData, nil
 }
+
+func (db *badgerDB) GetLabel(ctx context.Context, label string) (models.Label, error) {
+	labelData := new(models.Label)
+	err := db.Conn.Bucket("labels").Get(label, labelData)
+	return *labelData, err
+}
+
+func (db *badgerDB) GetLabels(ctx context.Context) []models.Label {
+	labelData := new(models.Label)
+	var labels []models.Label
+	iter := db.Conn.Bucket("labels").Iter()
+	defer iter.Close()
+	for iter.Next(labelData) {
+		labels = append(labels, *labelData)
+	}
+	return labels
+}

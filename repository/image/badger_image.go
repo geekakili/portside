@@ -17,24 +17,19 @@ type badgerDB struct {
 	Conn *bow.DB
 }
 
-type labelData struct {
-	Id     string `bow:"key"`
-	Images []string
-}
-
 func (db *badgerDB) AddLabel(ctx context.Context, tag string, labels ...string) error {
 	imageLabels, _ := db.GetImageLabels(ctx, tag)
 	label := models.ImageLabel{
-		Id:     tag,
+		Image:  tag,
 		Labels: imageLabels,
 	}
 
 	for _, labelName := range labels {
-		var newLabel labelData
+		var newLabel models.Label
 		err := db.Conn.Bucket("labels").Get(labelName, &newLabel)
 		if err != nil {
-			newLabel = labelData{
-				Id: labelName,
+			newLabel = models.Label{
+				Name: labelName,
 			}
 		}
 
@@ -67,7 +62,7 @@ func (db *badgerDB) GetImageLabels(ctx context.Context, imageName string) (label
 }
 
 func (db *badgerDB) GetByLabel(ctx context.Context, label string) ([]string, error) {
-	var imageLabel labelData
+	var imageLabel models.Label
 	err := db.Conn.Bucket("labels").Get(label, &imageLabel)
 	return imageLabel.Images, err
 }
