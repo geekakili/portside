@@ -20,7 +20,8 @@ func setupLabelHandler(db *driver.DB, client *client.Client, httpRouter *chi.Mux
 
 	router := chi.NewRouter()
 	router.Post("/add", handler.add)
-	// router.Post("/list", handler.list)
+	router.Get("/list/{label}", handler.list)
+	router.Get("/list", handler.list)
 	// router.Post("/edit", handler.edit)
 	// router.Post("/delete", handler.delete)
 	setupRoute(httpRouter, router, "/labels")
@@ -53,17 +54,22 @@ func (label *labelHandler) add(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, newlabel)
 }
 
-// // GetByName ...
-// func (label *labelHandler) list(w http.ResponseWriter, r *http.Request) {
-
-// }
-
-// // GetByLabel ...
-// func (label *labelHandler) edit(w http.ResponseWriter, r *http.Request) {
-
-// }
-
-// // PullImage pulls image from remote repository
-// func (label *labelHandler) delete(w http.ResponseWriter, r *http.Request) {
-
-// }
+// list ...
+func (label *labelHandler) list(w http.ResponseWriter, r *http.Request) {
+	labelName := chi.URLParam(r, "label")
+	if len(labelName) > 0 {
+		labelData, err := label.repo.GetLabel(r.Context(), labelName)
+		if err != nil {
+			respondWithJSON(w, http.StatusNotFound, "Label with such a name not found")
+			return
+		}
+		respondWithJSON(w, http.StatusOK, labelData)
+	} else {
+		labels := label.repo.GetLabels(r.Context())
+		if len(labels) > 0 {
+			respondWithJSON(w, http.StatusOK, labels)
+			return
+		}
+		respondWithJSON(w, http.StatusNotFound, "No labels exist on this host")
+	}
+}
