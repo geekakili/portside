@@ -22,7 +22,7 @@ func setupLabelHandler(db *driver.DB, client *client.Client, httpRouter *chi.Mux
 	router.Post("/add", handler.add)
 	router.Get("/list/{label}", handler.list)
 	router.Get("/list", handler.list)
-	// router.Post("/edit", handler.edit)
+	router.Put("/update/{label}", handler.update)
 	router.Delete("/delete/{label}", handler.delete)
 	setupRoute(httpRouter, router, "/labels")
 }
@@ -72,6 +72,30 @@ func (label *labelHandler) list(w http.ResponseWriter, r *http.Request) {
 		}
 		respondWithJSON(w, http.StatusNotFound, "No labels exist on this host")
 	}
+}
+
+func (label *labelHandler) update(w http.ResponseWriter, r *http.Request) {
+	labelName := chi.URLParam(r, "label")
+	labelData := new(models.Label)
+	err := json.NewDecoder(r.Body).Decode(labelData)
+	if err != nil {
+		respondWithJSON(w, http.StatusBadRequest, "Error processing label data")
+		return
+	}
+	if len(labelName) > 0 {
+		if len(labelData.Name) > 0 || len(labelData.Description) > 0 {
+			err := label.repo.Updatelabel(r.Context(), labelName, *labelData)
+			if err != nil {
+				respondWithJSON(w, http.StatusInternalServerError, "Could not update label")
+				return
+			}
+			respondWithJSON(w, http.StatusOK, "Label updated successfully")
+			return
+		}
+		respondWithJSON(w, http.StatusBadRequest, "Could not update label, no label data is provided")
+		return
+	}
+	respondWithJSON(w, http.StatusBadRequest, "Could not update label, label not found")
 }
 
 func (label *labelHandler) delete(w http.ResponseWriter, r *http.Request) {
