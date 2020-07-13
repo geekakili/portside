@@ -52,6 +52,24 @@ func (db *badgerDB) GetLabels(ctx context.Context) []models.Label {
 	return labels
 }
 
+// GetLabels returns labels from the database
+func (db *badgerDB) Updatelabel(ctx context.Context, label string, labelData models.Label) error {
+	oldLabel, err := db.GetLabel(ctx, label)
+	if err == nil && &oldLabel != nil {
+		if len(labelData.Name) > 0 {
+			oldLabel.Name = labelData.Name
+		}
+
+		if len(labelData.Description) > 0 {
+			oldLabel.Description = labelData.Description
+		}
+
+		err = db.Conn.Bucket("labels").Put(oldLabel)
+		return err
+	}
+	return nil
+}
+
 // Delete deletes a label from the database
 func (db *badgerDB) Delete(ctx context.Context, label string) (bool, error) {
 	labelData, err := db.GetLabel(ctx, label)
